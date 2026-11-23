@@ -13,6 +13,8 @@
     <Authors>antagonist.g</Authors>
     <Company>antagonist.g</Company>
     <Copyright>© 2026 antagonist.g</Copyright>
+    <!-- Windows shows the same four-part number as the release notes, without the commit id after it. -->
+    <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
     <ApplicationIcon>app.ico</ApplicationIcon>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <!-- No exe.config: the exe runs on the 4.8 every Windows 10 and 11 has, and stays a single file. -->

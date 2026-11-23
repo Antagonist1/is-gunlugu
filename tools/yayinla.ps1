@@ -1,24 +1,32 @@
 ﻿# Yayın: sürüm numarasını artırır, sürüm notlarını işler, exe'yi publish klasörüne koyar.
 #   powershell -NoProfile -ExecutionPolicy Bypass -File tools\yayinla.ps1         aynı gün: derleme +1, yeni çalışma günü: gün +1
-#   ... -Buyuk   büyük güncelleme (0.8.x -> 0.9.0), yalnızca kullanıcı isteyince
+#   ... -Yayin   GitHub'a gidecek sürüm (0.9.0.x -> 0.9.1.0), yalnızca kullanıcı "release" deyince
+#   ... -Buyuk   büyük güncelleme (0.9.x -> 0.10.0.0), yalnızca kullanıcı isteyince
 #   ... -Dene    hiçbir şeyi değiştirmeden çıkacak numarayı yazar
-# Numara düzeni ve sebepleri: docs\superpowers\specs\2026-11-20-surum-numarasi-design.md
-param([switch]$Buyuk, [switch]$Dene)
+# Numara dört parça, Windows'taki dosya sürümüyle aynı: dönem.büyük.yayın.GGDD. Son parçanın son iki hanesi
+# gün içi derleme, öncesi yayından sonraki çalışma günü: 0.9.1.302 = v0.9.1'den sonra 3. gün, 2. derleme.
+param([switch]$Yayin, [switch]$Buyuk, [switch]$Dene)
 $ErrorActionPreference = 'Stop'
 $root = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 $utf8 = New-Object Text.UTF8Encoding $false
 
-# 1. Numara: tools\surum.txt son yayını tutar ("0.8.5.3 2026-11-20").
+# 1. Numara: tools\surum.txt son derlemeyi tutar ("0.9.1.302 2026-11-26").
 $stateFile = Join-Path $PSScriptRoot 'surum.txt'
 $state = [IO.File]::ReadAllText($stateFile).Trim() -split '\s+'
 $v = @($state[0].Split('.') | ForEach-Object { [int]$_ })
+$day = [math]::Floor($v[3] / 100); $build = $v[3] % 100
 $today = (Get-Date).ToString('yyyy-MM-dd')
-if ($Buyuk) { $v[1]++; $v[2] = 0; $v[3] = 1 }
-elseif ($state[1] -ne $today) { $v[2]++; $v[3] = 1 }   # ara verilen günler sayılmaz, yalnızca iş yapılan gün
-else { $v[3]++ }
-$short = "$($v[0]).$($v[1]).$($v[2])"
-$full = "$short.$($v[3])"
-"Yeni sürüm: $full (programda $short)"
+if ($Buyuk) { $v[1]++; $v[2] = 0; $day = 0; $build = 0 }
+elseif ($Yayin) { $v[2]++; $day = 0; $build = 0 }
+elseif ($state[1] -ne $today) { $day++; $build = 1 }   # ara verilen günler sayılmaz, yalnızca iş yapılan gün
+else { $build++ }
+if ($build -gt 99) { throw 'Bir günde 99 derlemeden fazlası numaraya sığmaz.' }
+$v[3] = $day * 100 + $build
+$release = "$($v[0]).$($v[1]).$($v[2])"
+$full = "$release.$($v[3])"
+# Sürüm notlarında her çalışma gününün kendi başlığı var; yayın gününün başlığı yayının kendisi.
+$short = if ($day -eq 0) { $release } else { "$release.$day" }
+"Yeni sürüm: $full (programda $release, sürüm notlarında $short)"
 if ($Dene) { return }
 
 # 2. Derle ve test et; biri başarısızsa hiçbir şey değişmez.

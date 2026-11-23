@@ -31,12 +31,26 @@ public sealed partial class MainViewModel
 
     private ReleaseNote? ShownRelease =>
         ReleaseNoteList.FirstOrDefault(n => n.Version == _releaseVersion)
-        ?? ReleaseNoteList.FirstOrDefault(n => n.Version == AppVersion)
+        ?? ReleaseNoteList.FirstOrDefault(n => n.Version == RunningNotesVersion)
         ?? ReleaseNoteList.FirstOrDefault();
+
+    /// <summary>
+    /// The heading the running build's notes stand under: its working day ("0.9.1.3" for 0.9.1.302), or the release
+    /// itself on the day it went out ("0.9.1" for 0.9.1.0). Builds before 0.9.0.104 counted only the build there.
+    /// </summary>
+    private static string RunningNotesVersion
+    {
+        get
+        {
+            var v = typeof(MainViewModel).Assembly.GetName().Version;
+            var day = v.Revision >= 100 ? v.Revision / 100 : 0;
+            return day == 0 ? $"{v.Major}.{v.Minor}.{v.Build}" : $"{v.Major}.{v.Minor}.{v.Build}.{day}";
+        }
+    }
 
     public IList<ReleaseTab> ReleaseTabs => ReleaseNoteList.Select(n => new ReleaseTab(
         n.Version,
-        (n.Date?.ToString("d MMMM yyyy", Turkish) ?? "") + (n.Version == AppVersion ? " · bu sürüm" : ""),
+        (n.Date?.ToString("d MMMM yyyy", Turkish) ?? "") + (n.Version == RunningNotesVersion ? " · bu sürüm" : ""),
         n == ShownRelease,
         new RelayCommand(() => PickRelease(n.Version)))).ToList();
 

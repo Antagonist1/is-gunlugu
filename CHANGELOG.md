@@ -3,11 +3,28 @@
 Bu dosyanın biçimi [Keep a Changelog](https://keepachangelog.com) kurallarına uyar.
 Uygulamanın içindeki Sürüm notları ekranı bu dosyadan beslenir. 0.5.0 ve öncesi için not tutulmadı.
 
-Sürüm numarası 0.8.5.3 gibi dört parçalıdır: dönem (ilk GitHub yayını 1.0.0), büyük güncelleme, çalışma günü, o günün derlemesi.
+Sürüm numarası 0.9.1.302 gibi dört parçalıdır ve exe'nin Windows'taki dosya sürümüyle aynıdır: dönem, büyük güncelleme, GitHub yayını, son parçada gün ve derleme (son iki hane o günün derlemesi, öncesi yayından sonraki çalışma günü; 302 = 3. gün, 2. derleme). Başlıklar çalışma gününü gösterir (`0.9.1.3`), yayın gününün başlığı yayının kendisidir (`0.9.1`). 0.9.0.4 ve öncesinde son parça yalnızca derlemeydi, üçüncü parça çalışma günüydü.
 Yeni maddeler [Unreleased] altına yazılır; `tools\yayinla.ps1` onları günün sürümüne taşır ve sonlarına geldikleri derlemeyi ekler.
 Program derleme numarasını göstermez. 1.6–1.8 diye çıkan eski sürümler 0.6–0.8 olarak yeniden adlandırıldı.
 
 ## [Unreleased]
+
+## [0.9.0.2] - 2026-11-24
+
+### Changed
+
+- sürüm numarası: dört parça ve exe'nin Windows'taki sürümüyle aynı; üçüncü parça GitHub yayını, sonuncusu yayından sonraki gün ve o günün derlemesi (0.9.1.302 = 3. gün, 2. derleme) [0.9.0.201]
+
+### Fixed
+
+- exe'nin ürün sürümü: Özellikler › Ayrıntılar'da numaranın sonuna eklenen kayıt kimliği kalktı, dosya sürümüyle aynı görünür [0.9.0.202]
+
+## [0.9.0.1] - 2026-11-23
+
+### Changed
+
+- monitör başına ölçekleme: ölçekleri farklı iki ekranda pencere ikisinde de keskin çizilir, bulanıklaşmaz; ekranlar arasında taşıyınca boyutu korunur [0.9.0.104]
+- pencerenin yeri: kapandığı ekranda, o ekranın ölçeğiyle doğru yerde ve boyutta açılır; hızlı ekleme kutusu farenin olduğu ekranın ortasında çıkar [0.9.0.104]
 
 ## [0.9.0] - 2026-11-23
 
@@ -19,8 +36,6 @@ Program derleme numarasını göstermez. 1.6–1.8 diye çıkan eski sürümler 
 ### Changed
 
 - ilk adımlar tanıtımı: uygulamayı ilk kez açan kullanıcıda kendiliğinden başlar; son adımı diğer ekranların davetlerini anlatır, onlar davetle gelmeye devam eder [0.9.0.3]
-- monitör başına ölçekleme: ölçekleri farklı iki ekranda pencere ikisinde de keskin çizilir, bulanıklaşmaz; ekranlar arasında taşıyınca boyutu korunur [0.9.0.4]
-- pencerenin yeri: kapandığı ekranda, o ekranın ölçeğiyle doğru yerde ve boyutta açılır; hızlı ekleme kutusu farenin olduğu ekranın ortasında çıkar [0.9.0.4]
 
 ## [0.8.6] - 2026-11-23
 
