@@ -1,4 +1,4 @@
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
@@ -257,18 +257,21 @@ public partial class MainWindow : Window
     /// </summary>
     private void PlaceWindow()
     {
+        // The saved corner is in the main monitor's units (see RememberPlace), the size in window units.
         Core.WindowFit fit;
+        Monitors.Area area;
         var saved = _viewModel.SavedWindowPlace;
         if (saved is not null)
         {
-            var area = WorkArea(scale => System.Windows.Forms.Screen.FromRectangle(new System.Drawing.Rectangle(
-                (int)(saved[0] * scale), (int)(saved[1] * scale), (int)(saved[2] * scale), (int)(saved[3] * scale))));
-            fit = Core.WindowFit.Keep(saved[0], saved[1], saved[2], saved[3], MinWidth, MinHeight, area[0], area[1], area[2], area[3]);
+            var main = Monitors.PrimaryScale;
+            area = Monitors.Holding(saved[0] * main, saved[1] * main, saved[2] * main, saved[3] * main);
+            fit = Core.WindowFit.Keep(saved[0] * main / area.Scale, saved[1] * main / area.Scale, saved[2], saved[3],
+                MinWidth, MinHeight, area.Left, area.Top, area.Width, area.Height);
         }
         else
         {
-            var area = WorkArea(_ => System.Windows.Forms.Screen.FromPoint(System.Windows.Forms.Cursor.Position));
-            fit = Core.WindowFit.Place(Width, Height, MinWidth, MinHeight, area[0], area[1], area[2], area[3]);
+            area = Monitors.AtPointer();
+            fit = Core.WindowFit.Place(Width, Height, MinWidth, MinHeight, area.Left, area.Top, area.Width, area.Height);
         }
 
         MinWidth = fit.MinWidth;
@@ -276,47 +279,38 @@ public partial class MainWindow : Window
         Width = fit.Width;
         Height = fit.Height;
         WindowStartupLocation = WindowStartupLocation.Manual;
-        Left = fit.Left;
-        Top = fit.Top;
-        if (saved is not null && _viewModel.SavedWindowMaximized) WindowState = WindowState.Maximized;
+        // Until the window exists it counts in the main monitor's units; OnSourceInitialized puts it on its own monitor.
+        var start = Monitors.PrimaryScale;
+        Left = fit.Left * area.Scale / start;
+        Top = fit.Top * area.Scale / start;
+        _placeInPixels = new Point(fit.Left * area.Scale, fit.Top * area.Scale);
+        _openMaximized = saved is not null && _viewModel.SavedWindowMaximized;
     }
 
-    /// <summary>
-    /// The work area of one monitor in window units. SystemParameters only knows the main monitor, so on a second
-    /// screen the window would have been sized for the wrong one. <paramref name="pick"/> gets the display scale.
-    /// </summary>
-    internal static double[] WorkArea(Func<double, System.Windows.Forms.Screen> pick)
-    {
-        try
-        {
-            var scale = System.Windows.Forms.Screen.PrimaryScreen.Bounds.Width / SystemParameters.PrimaryScreenWidth;
-            if (scale > 0)
-            {
-                var a = pick(scale).WorkingArea;
-                return Core.WindowFit.AreaInDips(a.Left, a.Top, a.Width, a.Height, scale);
-            }
-        }
-        catch (Exception)
-        {
-            // Without the monitor list the main monitor is still a safe place.
-        }
-
-        var main = SystemParameters.WorkArea;
-        return new[] { main.Left, main.Top, main.Width, main.Height };
-    }
+    private Point? _placeInPixels;
+    private bool _openMaximized;
 
     /// <summary>The size and place to come back to: the normal one even when the window is maximised or minimised.</summary>
     private void RememberPlace()
     {
         var place = WindowState == WindowState.Normal ? new Rect(Left, Top, ActualWidth, ActualHeight) : RestoreBounds;
         if (place.IsEmpty || place.Width <= 0 || place.Height <= 0) return;
-        _viewModel.RememberWindow(place.Left, place.Top, place.Width, place.Height, WindowState == WindowState.Maximized);
+        // The corner is kept in the main monitor's units, as older versions did, so either can read the other's place.
+        var corner = WindowState == WindowState.Normal
+            ? Monitors.PixelPlace(this)
+            : new Point(place.Left * Monitors.ScaleOf(this), place.Top * Monitors.ScaleOf(this));
+        var main = Monitors.PrimaryScale;
+        _viewModel.RememberWindow(corner.X / main, corner.Y / main, place.Width, place.Height, WindowState == WindowState.Maximized);
     }
 
     protected override void OnSourceInitialized(EventArgs e)
     {
         base.OnSourceInitialized(e);
         UpdateTitleBar();
+        // The window comes to life on its monitor, takes that monitor's scale, and only then fills it if it was left so.
+        if (_placeInPixels is { } corner) Monitors.MoveTo(this, corner.X, corner.Y);
+        _placeInPixels = null;
+        if (_openMaximized) WindowState = WindowState.Maximized;
     }
 
     // The add box and the sub-task box shrink on a press anywhere else; inside them the press is the user's own.

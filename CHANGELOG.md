@@ -19,6 +19,8 @@ Program derleme numarasını göstermez. 1.6–1.8 diye çıkan eski sürümler 
 ### Changed
 
 - ilk adımlar tanıtımı: uygulamayı ilk kez açan kullanıcıda kendiliğinden başlar; son adımı diğer ekranların davetlerini anlatır, onlar davetle gelmeye devam eder [0.9.0.3]
+- monitör başına ölçekleme: ölçekleri farklı iki ekranda pencere ikisinde de keskin çizilir, bulanıklaşmaz; ekranlar arasında taşıyınca boyutu korunur [0.9.0.4]
+- pencerenin yeri: kapandığı ekranda, o ekranın ölçeğiyle doğru yerde ve boyutta açılır; hızlı ekleme kutusu farenin olduğu ekranın ortasında çıkar [0.9.0.4]
 
 ## [0.8.6] - 2026-11-23
 

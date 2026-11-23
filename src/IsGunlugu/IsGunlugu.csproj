@@ -14,6 +14,7 @@
     <Company>antagonist.g</Company>
     <Copyright>© 2026 antagonist.g</Copyright>
     <ApplicationIcon>app.ico</ApplicationIcon>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
     <!-- No exe.config: the exe runs on the 4.8 every Windows 10 and 11 has, and stays a single file. -->
     <GenerateSupportedRuntime>false</GenerateSupportedRuntime>
     <AutoGenerateBindingRedirects>false</AutoGenerateBindingRedirects>
