@@ -1,0 +1,227 @@
+using System.IO;
+using System.Text;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
+using System.Windows.Threading;
+using IsGunlugu;
+
+// Takes the guide's pictures from the real window, with made-up notes, and records where each part sits.
+static class Program
+{
+    const double Scale = 1.5;
+    const double ViewWidth = 1180;
+    const double ViewHeight = 860;
+
+    static string output;
+    static readonly StringBuilder Bounds = new();
+
+    static void Pump(int ms = 150)
+    {
+        var frame = new DispatcherFrame();
+        var timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(ms) };
+        timer.Tick += (_, _) => { timer.Stop(); frame.Continue = false; };
+        timer.Start();
+        Dispatcher.PushFrame(frame);
+    }
+
+    static void Save(FrameworkElement content, string name, double width, double height, string background = "WindowBrush", double viewScale = 1)
+    {
+        Pump(200);
+        var picture = new RenderTargetBitmap((int)(width * Scale), (int)(height * Scale), 96 * Scale, 96 * Scale, PixelFormats.Pbgra32);
+        var layer = new DrawingVisual();
+        var area = new Rect(0, 0, width, height);
+        using (var dc = layer.RenderOpen())
+        {
+            dc.DrawRectangle((Brush)Application.Current.FindResource(background), null, area);
+            dc.DrawRectangle(new VisualBrush(content) { ViewboxUnits = BrushMappingMode.Absolute, Viewbox = new Rect(0, 0, width * viewScale, height * viewScale), Stretch = Stretch.Fill }, null, area);
+        }
+        picture.Render(layer);
+        var png = new PngBitmapEncoder();
+        png.Frames.Add(BitmapFrame.Create(picture));
+        using var stream = File.Create(Path.Combine(output, name + ".png"));
+        png.Save(stream);
+    }
+
+    static FrameworkElement Find(DependencyObject parent, string name, Func<FrameworkElement, bool> where = null)
+    {
+        for (var i = 0; i < VisualTreeHelper.GetChildrenCount(parent); i++)
+        {
+            var child = VisualTreeHelper.GetChild(parent, i);
+            if (child is FrameworkElement { IsVisible: true } element && element.Name == name && (where == null || where(element))) return element;
+            var deeper = Find(child, name, where);
+            if (deeper != null) return deeper;
+        }
+        return null;
+    }
+
+    static void Record(FrameworkElement root, string shot, double width, double height)
+    {
+        var parts = new[]
+        {
+            "DraftBox", "AddDoneButton", "AddWithSubTasksButton", "TodayNav", "TaskGroupButton", "OpenNav", "FutureNav", "UndatedNav", "AllNav",
+            "CalendarNav", "MiniCalendar", "FilesPanel", "SearchBox", "SettingsButton", "ShortcutsButton", "SelectAllButton", "BottomPanel", "ContentScroll",
+            "RowCheck", "Grip", "Actions", "BringButton", "GuideCard", "GuideRing", "GroupPromptBox", "NamePromptBox",
+        };
+        var lines = new List<string>();
+        foreach (var part in parts)
+        {
+            var element = Find(root, part);
+            if (element == null || element.ActualWidth <= 0) continue;
+            var at = element.TranslatePoint(new Point(0, 0), root);
+            lines.Add($"\"{part}\":[{Pct(at.X, width)},{Pct(at.Y, height)},{Pct(element.ActualWidth, width)},{Pct(element.ActualHeight, height)}]");
+        }
+        Bounds.AppendLine($"\"{shot}\":{{{string.Join(",", lines)}}},");
+    }
+
+    static string Pct(double value, double whole) => (value / whole * 100).ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
+
+    [STAThread]
+    static void Main(string[] argv)
+    {
+        var folder = argv[0];
+        var dark = argv[1] == "dark";
+        var suffix = dark ? "-d" : "-l";
+        output = argv[2];
+        Directory.CreateDirectory(output);
+        Directory.CreateDirectory(folder);
+        foreach (var old in Directory.GetDirectories(folder)) Directory.Delete(old, true);
+        foreach (var old in Directory.GetFiles(folder)) File.Delete(old);
+
+        string D(int days) => DateTime.Today.AddDays(days).ToString("dd/MM/yyyy", System.Globalization.CultureInfo.InvariantCulture);
+        string Done(params string[] names) => string.Concat(names.Select(n => "👍[Done]" + n + "\r\n"));
+
+        var notes = Path.Combine(folder, "notlar.txt");
+        File.WriteAllText(notes,
+            "----" + D(-16) + "\r\n" + Done("Sunucu yedeğini kontrol et", "Lisansları yenile", "Eğitim dokümanını gönder") + "\r\n" +
+            "----" + D(-12) + "\r\n" + Done("Kablo siparişi", "Test cihazını kalibre et") + "\r\n" +
+            "----" + D(-9) + "\r\n" + Done("Saha ziyareti", "Teklifi gönder", "Fatura girişi", "Arıza kaydını kapat", "Haftalık rapor", "Ekip toplantısı") + "\r\n" +
+            "----" + D(-5) + "\r\n🚨Tedarikçiyle görüş\r\n\t🚨Fiyat listesini iste\r\n\t\tGeçen yılki listeyle karşılaştır\r\n" + Done("Ofis ağını kontrol et") + "\r\n" +
+            "----" + D(-2) + "\r\n" + Done("Müşteri ziyareti raporu", "Yazıcı toneri") + "\r\n" +
+            "----" + D(-1) + "\r\n🚨Depo sayımını tamamla\r\n" + Done("Toplantı notlarını paylaş") + "\r\n" +
+            "----" + D(0) + "\r\n👍[Done]Sabah toplantısı\r\n🚨Faturaları kontrol et\r\n" +
+            "🚨Müşteri sunumunu hazırla\r\n\t👍[Done]Grafikleri güncelle\r\n\t🚨Demo akışını dene\r\n\t\tYedek bilgisayarda da açılıyor mu bak\r\n\t🚨Slaytları paylaş\r\n" +
+            "👍[Done]Yazıcı arızasını çöz\r\n🚨Yeni sürüm notunu yaz\r\n\r\n" +
+            "----" + D(1) + "\r\n🚨Haftalık raporu gönder\r\n\r\n" +
+            "----" + D(3) + "\r\n🚨Bakım planını çıkar\r\n\t🚨Yedek parça listesi\r\n\r\n" +
+            "----tarihsiz\r\n🚨Ofis için yeni sandalye bak\r\n🚨Eski kayıtları arşivle\r\n", new UTF8Encoding(false));
+        var reports = Path.Combine(folder, "raporlar.txt");
+        File.WriteAllText(reports, "----" + D(0) + "\r\n🚨Aylık özet\r\n🚨Satış tablosu\r\n", new UTF8Encoding(false));
+        var home = Path.Combine(folder, "ev.txt");
+        File.WriteAllText(home, "----" + D(0) + "\r\n🚨Market alışverişi\r\n", new UTF8Encoding(false));
+
+        RenderOptions.ProcessRenderMode = System.Windows.Interop.RenderMode.SoftwareOnly;
+        var app = new Application();
+        foreach (var part in new[] { dark ? "Dark" : "Light", "Styles" })
+        {
+            app.Resources.MergedDictionaries.Add(new ResourceDictionary
+            {
+                Source = new Uri("pack://application:,,,/IsGunlugu;component/Themes/" + part + ".xaml"),
+            });
+        }
+
+        var vm = new MainViewModel(new[] { notes, reports, home }, folder);
+        var window = new MainWindow(vm) { ShowActivated = false, ShowInTaskbar = false, Left = -4000, Top = 0, WindowStartupLocation = WindowStartupLocation.Manual };
+        // Windows limits a window to the screen; the pictures need the same size on any screen.
+        var handle = new System.Windows.Interop.WindowInteropHelper(window).EnsureHandle();
+        System.Windows.Interop.HwndSource.FromHwnd(handle).AddHook((IntPtr h, int message, IntPtr w, IntPtr l, ref bool handled) =>
+        {
+            if (message == 0x24)
+            {
+                System.Runtime.InteropServices.Marshal.WriteInt32(l, 24, 3000);
+                System.Runtime.InteropServices.Marshal.WriteInt32(l, 28, 3000);
+                handled = true;
+            }
+            return IntPtr.Zero;
+        });
+        window.Width = ViewWidth + 40;
+        window.Height = ViewHeight + 60;
+        window.Show();
+        vm.ExpandTaskGroup();
+        Pump(300);
+
+        // A fixed size, whatever screen this runs on.
+        var root = (FrameworkElement)window.Content;
+        root.Width = ViewWidth;
+        root.Height = ViewHeight;
+        root.HorizontalAlignment = HorizontalAlignment.Left;
+        root.VerticalAlignment = VerticalAlignment.Top;
+        // Scaled down in the window so a small screen does not clip it; the picture is drawn at full size.
+        root.LayoutTransform = new ScaleTransform(0.7, 0.7);
+        root.UpdateLayout();
+
+        vm.MoveFileToGroup(reports, "İş"); Pump();
+        vm.MoveFileToGroup(notes, "İş"); Pump();
+
+        void Shot(string name)
+        {
+            Pump(200);
+            root.UpdateLayout();
+            Save(root, name + suffix, ViewWidth, ViewHeight, "WindowBrush", 0.7);
+            if (!dark) Record(root, name, ViewWidth, ViewHeight);
+        }
+
+        vm.ShowTodayCommand.Execute(null); Shot("today");
+
+        var editing = vm.Groups[0].Entries.First(e => e.Text == "Faturaları kontrol et");
+        editing.EditCommand.Execute(null); Pump();
+        Shot("edit");
+        editing.CancelCommand.Execute(null); Pump();
+
+        vm.ShowOpenCommand.Execute(null); Shot("open");
+        vm.ShowFutureCommand.Execute(null); Shot("future");
+        vm.ShowUndatedCommand.Execute(null); Shot("undated");
+
+        vm.ShowAllCommand.Execute(null); Pump();
+        for (var i = 0; i < vm.Groups.Count; i++)
+        {
+            if (vm.Groups[i].IsCollapsed) { vm.Groups[i].OpenCommand.Execute(null); Pump(60); }
+        }
+        Shot("all");
+
+        var rows = vm.Groups.SelectMany(g => g.Entries).ToList();
+        vm.ToggleSelection(rows.First(r => r.Text == "Depo sayımını tamamla"));
+        vm.ToggleSelection(rows.First(r => r.Text == "Tedarikçiyle görüş"));
+        Shot("selection");
+        vm.PickDayForSelectedCommand.Execute(null); Shot("pickday");
+        vm.CancelPickDay(); vm.ClearSelection();
+
+        vm.ShowCalendarCommand.Execute(null); Shot("calendar");
+        vm.ShowTodayCommand.Execute(null); Pump();
+
+        vm.IsSettingsOpen = true; Shot("settings"); vm.IsSettingsOpen = false;
+        vm.IsHelpOpen = true; Shot("shortcuts"); vm.IsHelpOpen = false;
+        vm.IsReleaseNotesOpen = true; Shot("notes"); vm.IsReleaseNotesOpen = false;
+        vm.BeginNewFile(); vm.NamePromptText = "proje notları"; Shot("newfile"); vm.CancelNamePromptCommand.Execute(null);
+        window.StartGuide(); Pump();
+        for (var i = 0; i < 5; i++) { window.AdvanceGuide(); Pump(60); }
+        Shot("guide");
+        window.EndGuide(); Pump();
+
+        var panel = new TrayPanel(vm, () => { }) { ShowActivated = false, Left = -4000, Top = 0 };
+        panel.Show(); Pump(300);
+        var panelRoot = (FrameworkElement)panel.Content;
+        Save(panelRoot, "tray" + suffix, panelRoot.ActualWidth + 16, panelRoot.ActualHeight + 16, "SidebarBrush");
+        panel.Close();
+
+        var menu = new ContextMenu();
+        MenuItem first = null;
+        foreach (var label in new[] { "Yukarı taşı", "Aşağı taşı", "-", "Seç", "-", "Başka güne taşı", "Bugüne al", "Yarına taşı", "Tarihsiz yap" })
+        {
+            if (label == "-") { menu.Items.Add(new Separator()); continue; }
+            var item = new MenuItem { Header = label };
+            first ??= item;
+            menu.Items.Add(item);
+        }
+        menu.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+        menu.Arrange(new Rect(menu.DesiredSize));
+        menu.UpdateLayout();
+        Save(menu, "menu" + suffix, menu.ActualWidth, menu.ActualHeight, "SidebarBrush");
+
+        if (!dark) File.WriteAllText(Path.Combine(output, "bounds.json"), "{" + Bounds.ToString().TrimEnd('\r', '\n', ',') + "}", new UTF8Encoding(false));
+
+        window.Close();
+        Console.WriteLine("TAMAM " + suffix);
+    }
+}

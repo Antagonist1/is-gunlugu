@@ -1,0 +1,64 @@
+<Window x:Class="IsGunlugu.QuickAdd"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:IsGunlugu"
+        Title="İş Günlüğü: hızlı ekle" Width="560" SizeToContent="Height"
+        WindowStyle="None" AllowsTransparency="True" Background="Transparent" ResizeMode="NoResize"
+        ShowInTaskbar="False" Topmost="True" WindowStartupLocation="Manual"
+        FontFamily="{StaticResource TextFont}" Foreground="{DynamicResource InkBrush}"
+        TextOptions.TextFormattingMode="Display"
+        Deactivated="Window_Deactivated" PreviewKeyDown="Window_PreviewKeyDown">
+
+    <!-- The margin leaves room for the shadow. -->
+    <Border Margin="10" CornerRadius="10" Padding="18,14,18,12" SnapsToDevicePixels="True"
+            Background="{DynamicResource WindowBrush}" BorderBrush="{DynamicResource InputBorderBrush}" BorderThickness="1">
+        <Border.Effect>
+            <DropShadowEffect Color="Black" BlurRadius="18" ShadowDepth="3" Opacity="0.3" />
+        </Border.Effect>
+
+        <StackPanel>
+            <DockPanel Margin="0,0,0,10">
+                <!-- Which file the task goes to: a click or Ctrl+D lists the files by group; the last one picked is kept. -->
+                <Button x:Name="FileButton" DockPanel.Dock="Right" Style="{StaticResource Chip}" Focusable="False" VerticalAlignment="Center"
+                        Click="FileButton_Click" ToolTip="Hangi dosyaya eklensin (Ctrl+D)" AutomationProperties.Name="Dosya seç">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock x:Name="FileLabel" FontSize="12.5" />
+                        <TextBlock Text=" ▾" FontSize="11" Foreground="{DynamicResource MutedBrush}" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
+                <TextBlock x:Name="Heading" Text="Bugüne ekle" FontSize="16" FontWeight="SemiBold" VerticalAlignment="Center" />
+            </DockPanel>
+            <Grid x:Name="PlainPart">
+                <TextBox x:Name="Box" Style="{StaticResource InputBox}" FontSize="15" AcceptsReturn="True" TextWrapping="Wrap" MaxHeight="180"
+                         VerticalScrollBarVisibility="Auto" PreviewKeyDown="Box_PreviewKeyDown" TextChanged="Box_TextChanged"
+                         AutomationProperties.Name="Bugüne eklenecek iş" />
+                <TextBlock x:Name="Hint" Text="Ne yapacaksın?" FontSize="15" Margin="13,9,0,0" Foreground="{DynamicResource MutedBrush}" IsHitTestVisible="False" />
+            </Grid>
+            <!-- The same visual box as the add box in the window: the task as the list will show it -->
+            <Border x:Name="VisualPart" Background="{DynamicResource InputBrush}" BorderBrush="{DynamicResource AccentBrush}" BorderThickness="1"
+                    CornerRadius="6" Padding="12,8" Visibility="Collapsed">
+                <ScrollViewer MaxHeight="220" VerticalScrollBarVisibility="Auto" Focusable="False">
+                    <local:TaskLinesEditor x:Name="Editor" TextSize="15" Placeholder="Ne yapacaksın?" AutomationProperties.Name="Bugüne eklenecek iş" />
+                </ScrollViewer>
+            </Border>
+            <StackPanel x:Name="DateHint" Orientation="Horizontal" Margin="2,6,0,0" Visibility="Collapsed">
+                <TextBlock x:Name="DateHintText" FontSize="13" Foreground="{DynamicResource AccentBrush}" VerticalAlignment="Center" />
+                <TextBlock Text="·" FontSize="13" Foreground="{DynamicResource MutedBrush}" VerticalAlignment="Center" Margin="8,0" />
+                <Button Style="{StaticResource LinkButton}" Content="Tarih değil" Click="NotADate_Click" VerticalAlignment="Center" Focusable="False"
+                        ToolTip="Tarih sanılan kelimeler başlıkta kalır, iş bugüne eklenir" />
+            </StackPanel>
+            <DockPanel x:Name="VisualButtons" Margin="0,8,0,0" Visibility="Collapsed">
+                <Button DockPanel.Dock="Right" Style="{StaticResource PrimaryButton}" Content="Ekle" Padding="14,5" Click="Add_Click"
+                        ToolTip="Enter. Yapıldı olarak eklemek için Ctrl+Enter" Focusable="False" />
+                <StackPanel Orientation="Horizontal">
+                    <Button x:Name="NoteChip" Style="{StaticResource Chip}" Content="＋ Açıklama" Margin="0,0,6,0" Click="NoteChip_Click"
+                            ToolTip="Kısayol: Shift+Enter" Focusable="False" />
+                    <Button Style="{StaticResource Chip}" Content="＋ Alt iş" Click="SubTaskChip_Click"
+                            ToolTip="Kısayol: Shift+Enter, sonra - " Focusable="False" />
+                </StackPanel>
+            </DockPanel>
+            <TextBlock x:Name="KeyHint" Text="Enter: ekle   ·   Ctrl+Enter: yapıldı olarak ekle   ·   Alt+Enter: alt satır, - ile alt iş   ·   Esc: kapat"
+                       FontSize="12" Foreground="{DynamicResource MutedBrush}" Margin="2,8,0,0" TextWrapping="Wrap" />
+        </StackPanel>
+    </Border>
+</Window>

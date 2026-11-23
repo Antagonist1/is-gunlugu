@@ -1,0 +1,24 @@
+# The Google client secret: never in the repository (see src/IsGunlugu/GoogleClient.Secret.example.txt)
+GoogleClient.Secret.cs
+
+# Build output
+bin/
+obj/
+publish/
+*.user
+.vs/
+
+# Working copies and design sessions; older snapshots still hold the secret
+.superpowers/
+
+# Tools of the coding assistant, not part of the app
+.agents/
+.claude/
+skills-lock.json
+
+# Design notes from the working sessions stay on this computer
+docs/superpowers/
+
+# Only the desktop app is public: the phone app and the solution that holds it stay here
+src/IsGunlugu.Mobile/
+IsGunlugu.sln

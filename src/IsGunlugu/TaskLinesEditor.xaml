@@ -1,0 +1,73 @@
+<UserControl x:Class="IsGunlugu.TaskLinesEditor"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:core="clr-namespace:IsGunlugu.Core"
+             x:Name="Root" Focusable="False"
+             PreviewMouseLeftButtonDown="Root_PreviewMouseLeftButtonDown" PreviewMouseMove="Root_PreviewMouseMove"
+             PreviewMouseLeftButtonUp="Root_PreviewMouseLeftButtonUp"
+             PreviewTextInput="Root_PreviewTextInput">
+    <!-- The visual way of writing a task: each line its own box, drawn the way the list will show it. -->
+    <ItemsControl x:Name="LineList" ItemsSource="{Binding Rows, ElementName=Root}" Focusable="False">
+        <ItemsControl.ItemTemplate>
+            <DataTemplate>
+                <DockPanel x:Name="Line" Margin="0,1" Background="Transparent">
+                    <Grid x:Name="BoxSpot" DockPanel.Dock="Left" Width="16" Margin="0,4,9,0" VerticalAlignment="Top">
+                        <Border x:Name="Box" Width="16" Height="16" CornerRadius="4" BorderThickness="2" HorizontalAlignment="Left" VerticalAlignment="Top"
+                                BorderBrush="{DynamicResource MutedBrush}" Background="Transparent">
+                            <Path x:Name="Tick" Data="M 2.6,6.4 L 5,8.8 L 9.6,3.8" Width="12" Height="12" Stroke="{DynamicResource WindowBrush}" StrokeThickness="1.8"
+                                  StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round" Visibility="Collapsed"
+                                  HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                    </Grid>
+                    <Grid>
+                        <TextBox x:Name="LineBox" Style="{StaticResource SelectableText}" IsReadOnly="False" IsTabStop="True" Cursor="IBeam"
+                                 Text="{Binding Text, UpdateSourceTrigger=PropertyChanged}" FontSize="{Binding FontSize}" Padding="0,2"
+                                 CaretBrush="{DynamicResource InkBrush}" AcceptsReturn="False" TextWrapping="Wrap"
+                                 PreviewKeyDown="LineBox_PreviewKeyDown" TextChanged="LineBox_TextChanged" GotKeyboardFocus="LineBox_GotKeyboardFocus"
+                                 DataObject.Pasting="LineBox_Pasting" AutomationProperties.Name="{Binding Label}" />
+                        <TextBlock x:Name="Hint" Text="{Binding Hint}" FontSize="{Binding FontSize}" Margin="2,2,0,0" Foreground="{DynamicResource MutedBrush}"
+                                   IsHitTestVisible="False" Visibility="Collapsed" TextTrimming="CharacterEllipsis" />
+                    </Grid>
+                </DockPanel>
+                <DataTemplate.Triggers>
+                    <DataTrigger Binding="{Binding Kind}" Value="{x:Static core:LineKind.Note}">
+                        <Setter TargetName="Line" Property="Margin" Value="25,1,0,1" />
+                        <Setter TargetName="BoxSpot" Property="Visibility" Value="Collapsed" />
+                        <Setter TargetName="LineBox" Property="Foreground" Value="{DynamicResource MutedBrush}" />
+                    </DataTrigger>
+                    <DataTrigger Binding="{Binding Kind}" Value="{x:Static core:LineKind.SubTask}">
+                        <Setter TargetName="Line" Property="Margin" Value="25,1,0,1" />
+                        <Setter TargetName="Box" Property="Width" Value="14" />
+                        <Setter TargetName="Box" Property="Height" Value="14" />
+                        <Setter TargetName="BoxSpot" Property="Margin" Value="0,4,8,0" />
+                        <Setter TargetName="BoxSpot" Property="Width" Value="14" />
+                    </DataTrigger>
+                    <DataTrigger Binding="{Binding Kind}" Value="{x:Static core:LineKind.SubNote}">
+                        <Setter TargetName="Line" Property="Margin" Value="47,1,0,1" />
+                        <Setter TargetName="BoxSpot" Property="Visibility" Value="Collapsed" />
+                        <Setter TargetName="LineBox" Property="Foreground" Value="{DynamicResource MutedBrush}" />
+                    </DataTrigger>
+                    <DataTrigger Binding="{Binding IsDone}" Value="True">
+                        <Setter TargetName="Box" Property="Background" Value="{DynamicResource DoneBrush}" />
+                        <Setter TargetName="Box" Property="BorderBrush" Value="{DynamicResource DoneBrush}" />
+                        <Setter TargetName="Tick" Property="Visibility" Value="Visible" />
+                    </DataTrigger>
+                    <!-- Taken in a selection over several lines (Ctrl+A twice, or a drag across lines) -->
+                    <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                        <Setter TargetName="Line" Property="Background" Value="{DynamicResource KeyRowBrush}" />
+                    </DataTrigger>
+                    <DataTrigger Binding="{Binding IsHidden}" Value="True">
+                        <Setter TargetName="Line" Property="Visibility" Value="Collapsed" />
+                    </DataTrigger>
+                    <MultiDataTrigger>
+                        <MultiDataTrigger.Conditions>
+                            <Condition Binding="{Binding Text}" Value="" />
+                            <Condition Binding="{Binding HasHint}" Value="True" />
+                        </MultiDataTrigger.Conditions>
+                        <Setter TargetName="Hint" Property="Visibility" Value="Visible" />
+                    </MultiDataTrigger>
+                </DataTemplate.Triggers>
+            </DataTemplate>
+        </ItemsControl.ItemTemplate>
+    </ItemsControl>
+</UserControl>

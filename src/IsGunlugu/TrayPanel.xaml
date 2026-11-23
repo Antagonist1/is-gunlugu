@@ -1,0 +1,97 @@
+<Window x:Class="IsGunlugu.TrayPanel"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Bugünün işleri" Width="396" SizeToContent="Height"
+        WindowStyle="None" AllowsTransparency="True" Background="Transparent" ResizeMode="NoResize"
+        ShowInTaskbar="False" Topmost="True" WindowStartupLocation="Manual"
+        FontFamily="{StaticResource TextFont}" Foreground="{DynamicResource InkBrush}"
+        TextOptions.TextFormattingMode="Display"
+        Deactivated="Window_Deactivated" PreviewKeyDown="Window_PreviewKeyDown">
+
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="Visible" />
+    </Window.Resources>
+
+    <!-- The margin leaves room for the shadow. -->
+    <Border Margin="8" CornerRadius="8" Padding="16,14" SnapsToDevicePixels="True"
+            Background="{DynamicResource WindowBrush}" BorderBrush="{DynamicResource InputBorderBrush}" BorderThickness="1">
+        <Border.Effect>
+            <DropShadowEffect Color="Black" BlurRadius="14" ShadowDepth="2" Opacity="0.25" />
+        </Border.Effect>
+
+        <StackPanel>
+            <TextBlock Text="Bugün" FontSize="18" FontWeight="SemiBold" />
+            <TextBlock Text="{Binding TraySummary}" FontSize="13" Foreground="{DynamicResource MutedBrush}" Margin="0,2,0,10" TextWrapping="Wrap" />
+
+            <TextBlock Text="Bugün için bekleyen iş yok." FontSize="14" Foreground="{DynamicResource MutedBrush}" Margin="0,4,0,8"
+                       Visibility="{Binding IsTodayListEmpty, Converter={StaticResource Visible}}" />
+
+            <ScrollViewer MaxHeight="420" VerticalScrollBarVisibility="Auto" Focusable="False">
+                <ItemsControl ItemsSource="{Binding TodayOpenRows}" Focusable="False">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border x:Name="Row" Background="Transparent" CornerRadius="6" Margin="-6,0" Padding="6,6">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="30" />
+                                        <ColumnDefinition />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <CheckBox Style="{StaticResource StatusCheck}" VerticalAlignment="Top" IsChecked="{Binding CheckState}"
+                                              AutomationProperties.Name="{Binding Text}" />
+                                    <StackPanel Grid.Column="1">
+                                        <!-- A note icon after the title when the task has a description: the panel stays short but says it is there -->
+                                        <TextBlock FontSize="14" FontWeight="SemiBold" TextWrapping="Wrap"><Run Text="{Binding Text, Mode=OneWay}" /><InlineUIContainer BaselineAlignment="Center"><Path Data="{StaticResource IconNotepad}" Stroke="{DynamicResource MutedBrush}" StrokeThickness="1.3" Width="13" Height="13" Stretch="Uniform" Margin="6,0,0,0"
+                                                ToolTip="Açıklaması var" Visibility="{Binding HasNoteLines, Converter={StaticResource Visible}}" /></InlineUIContainer></TextBlock>
+                                        <ItemsControl ItemsSource="{Binding NextTasks}" Focusable="False" Margin="0,4,0,0">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Grid Margin="0,1,0,3" Visibility="{Binding IsTask, Converter={StaticResource Visible}}">
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="24" />
+                                                            <ColumnDefinition />
+                                                        </Grid.ColumnDefinitions>
+                                                        <CheckBox Style="{StaticResource StatusCheck}" VerticalAlignment="Top" HorizontalAlignment="Left"
+                                                                  IsChecked="{Binding IsDone}" AutomationProperties.Name="{Binding Text}">
+                                                            <CheckBox.LayoutTransform>
+                                                                <ScaleTransform ScaleX="0.84" ScaleY="0.84" />
+                                                            </CheckBox.LayoutTransform>
+                                                        </CheckBox>
+                                                        <TextBlock Grid.Column="1" FontSize="13.5" TextWrapping="Wrap"><Run Text="{Binding Text, Mode=OneWay}" /><InlineUIContainer BaselineAlignment="Center"><Path Data="{StaticResource IconNotepad}" Stroke="{DynamicResource MutedBrush}" StrokeThickness="1.3" Width="13" Height="13" Stretch="Uniform" Margin="6,0,0,0"
+                                                ToolTip="Açıklaması var" Visibility="{Binding HasDescription, Converter={StaticResource Visible}}" /></InlineUIContainer></TextBlock>
+                                                    </Grid>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                        <Button Style="{StaticResource LinkButton}" HorizontalAlignment="Left" FontSize="13" Margin="0,0,0,2"
+                                                Content="{Binding MoreTasks}" ContentStringFormat="+ {0} alt iş daha" Click="MoreTasks_Click"
+                                                ToolTip="Bu işi uygulamada açar" Visibility="{Binding HasMoreTasks, Converter={StaticResource Visible}}" />
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Top">
+                                        <ContentControl Content="{Binding Chip}" Style="{StaticResource TimeChipHost}" Margin="8,1,0,0" />
+                                        <TextBlock Text="{Binding Progress}" FontSize="13" Foreground="{DynamicResource MutedBrush}" Margin="8,1,0,0"
+                                                   Visibility="{Binding HasProgress, Converter={StaticResource Visible}}" />
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                            <DataTemplate.Triggers>
+                                <Trigger SourceName="Row" Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="Row" Property="Background" Value="{DynamicResource HoverBrush}" />
+                                </Trigger>
+                            </DataTemplate.Triggers>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+
+            <DockPanel Margin="0,8,0,0" Visibility="{Binding HasStatus, Converter={StaticResource Visible}}">
+                <Button DockPanel.Dock="Right" Style="{StaticResource LinkButton}" Content="Geri al" VerticalAlignment="Center"
+                        Command="{Binding UndoCommand}" Visibility="{Binding CanUndo, Converter={StaticResource Visible}}" />
+                <TextBlock Text="{Binding StatusText}" FontSize="13" Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap" VerticalAlignment="Center" />
+            </DockPanel>
+
+            <Button Style="{StaticResource SecondaryButton}" Content="Uygulamayı aç" HorizontalAlignment="Left" Margin="0,10,0,0" Click="OpenApp_Click" />
+        </StackPanel>
+    </Border>
+</Window>

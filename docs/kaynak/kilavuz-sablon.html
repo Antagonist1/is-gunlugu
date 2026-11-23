@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>İş Günlüğü Kılavuzu</title>
+<style>
+/* Palette and type come from the app itself, so the page reads as part of it.
+   Layout: a quiet contents column with a live map of the window, beside one reading column. */
+:root {
+  --paper: #FBFBFA; --side: #F1F1EE; --line: #C9C9C4; --hover: #E7E7E3;
+  --ink: #1D1E1C; --muted: #62645F;
+  --accent: #0B6A6F; --on-accent: #FFFFFF;
+  --done: #2F7D4F; --open: #C2410C; --partial: #E3AE1F; --on-partial: #2B2205;
+  --shadow: 0 1px 2px rgba(29,30,28,.08), 0 12px 32px rgba(29,30,28,.10);
+  --text: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+  --display: "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif;
+  --mono: "Cascadia Mono", Consolas, "Courier New", monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #1B1C1A; --side: #232422; --line: #4A4C48; --hover: #2F302E;
+    --ink: #ECECE8; --muted: #A6A8A2;
+    --accent: #56C2C4; --on-accent: #0D2526;
+    --done: #5DBB83; --open: #F08A5D; --partial: #EBBC3F; --on-partial: #2B2205;
+    --shadow: 0 1px 2px rgba(0,0,0,.4), 0 12px 32px rgba(0,0,0,.45);
+    color-scheme: dark;
+  }
+  :root:not([data-theme="light"]) .l { display: none; }
+  :root:not([data-theme="light"]) .d { display: block; }
+}
+:root[data-theme="dark"] {
+  --paper: #1B1C1A; --side: #232422; --line: #4A4C48; --hover: #2F302E;
+  --ink: #ECECE8; --muted: #A6A8A2;
+  --accent: #56C2C4; --on-accent: #0D2526;
+  --done: #5DBB83; --open: #F08A5D; --partial: #EBBC3F; --on-partial: #2B2205;
+  --shadow: 0 1px 2px rgba(0,0,0,.4), 0 12px 32px rgba(0,0,0,.45);
+  color-scheme: dark;
+}
+:root[data-theme="dark"] .l { display: none; }
+:root[data-theme="dark"] .d { display: block; }
+.d { display: none; }
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: 20px; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 16px/1.6 var(--text); }
+img { display: block; max-width: 100%; height: auto; }
+a { color: var(--accent); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 3px; }
+
+.page { display: grid; grid-template-columns: 268px minmax(0, 1fr); max-width: 1240px; margin: 0 auto; }
+.rail { position: sticky; top: 0; align-self: start; max-height: 100vh; overflow-y: auto; padding: 28px 20px 28px 24px; display: flex; flex-direction: column; gap: 18px; }
+.rail .brand { font: 600 15px var(--display); display: flex; align-items: center; gap: 9px; color: inherit; text-decoration: none; }
+.rail svg.logo { width: 22px; height: 22px; flex: none; }
+.rail nav { display: flex; flex-direction: column; gap: 1px; }
+.rail nav a { color: var(--muted); text-decoration: none; font-size: 14px; padding: 5px 10px; border-radius: 5px; }
+.rail nav a:hover { background: var(--hover); color: var(--ink); }
+.rail nav a[aria-current="true"] { background: var(--side); color: var(--ink); font-weight: 600; }
+.rail .where { font-size: 12.5px; color: var(--muted); display: flex; flex-direction: column; gap: 6px; }
+
+main { padding: 44px 40px 90px; min-width: 0; display: flex; flex-direction: column; gap: 72px; }
+section { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+h1 { font: 600 clamp(32px, 4.6vw, 46px)/1.1 var(--display); margin: 0; text-wrap: balance; letter-spacing: -.01em; }
+h2 { font: 600 27px/1.2 var(--display); margin: 0; text-wrap: balance; }
+h3 { font: 600 18px/1.3 var(--display); margin: 0; }
+p { margin: 0; max-width: 66ch; }
+.lead { font-size: 18px; color: var(--muted); max-width: 60ch; }
+.sub { display: flex; flex-direction: column; gap: 12px; }
+
+/* The opening: one note file, read two ways. */
+.pair { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.pair > div { padding: 16px 18px; min-width: 0; }
+.pair .cap { font-size: 12.5px; color: var(--muted); margin-bottom: 10px; }
+.txt { background: var(--side); font: 13.5px/1.9 var(--mono); tab-size: 3; }
+.txt div { white-space: pre-wrap; overflow-wrap: anywhere; min-height: 25.65px; }
+.txt .h { color: var(--muted); }
+.ui .day { font-weight: 600; color: var(--muted); font-size: 13.5px; line-height: 25.65px; }
+.ui .r { display: flex; align-items: center; gap: 9px; font-size: 14.5px; line-height: 25.65px; min-height: 25.65px; }
+.ui .r.s { padding-left: 26px; font-size: 13.5px; }
+.ui .r.n { padding-left: 53px; font-size: 13px; color: var(--muted); }
+.ui .r b { font-weight: 600; }
+
+.box { width: 17px; height: 17px; border-radius: 4px; border: 1.75px solid var(--open); flex: none; display: inline-grid; place-items: center; vertical-align: -3px; }
+.box svg { width: 11px; height: 11px; }
+.box.done { background: var(--done); border-color: var(--done); color: var(--paper); }
+.box.part { background: var(--partial); border-color: var(--partial); color: var(--on-partial); }
+
+/* Annotated pictures */
+.shot { position: relative; border-radius: 9px; border: 1px solid var(--line); box-shadow: var(--shadow); overflow: hidden; background: var(--side); }
+.shot.bare { box-shadow: none; }
+.pin { position: absolute; width: 24px; height: 24px; margin: -12px 0 0 -12px; border-radius: 50%; background: var(--accent); color: var(--on-accent); font: 600 13px/24px var(--text); text-align: center; box-shadow: 0 0 0 2px var(--paper); text-decoration: none; }
+.legend { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 10px 26px; counter-reset: l; }
+.legend li { counter-increment: l; position: relative; padding-left: 34px; font-size: 15px; line-height: 1.5; }
+.legend li::before { content: counter(l); position: absolute; left: 0; top: 0; width: 24px; height: 24px; border-radius: 50%; background: var(--accent); color: var(--on-accent); font: 600 13px/24px var(--text); text-align: center; }
+
+/* A screen: its picture, and where it sits in the window. */
+.screen { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 14px 22px; align-items: start; }
+.screen .head { grid-column: 2; display: flex; flex-direction: column; gap: 6px; }
+.screen .map { grid-column: 1; grid-row: 1; }
+.screen .shot, .screen .legend, .screen .after { grid-column: 1 / -1; }
+.map svg { display: block; width: 100%; height: auto; }
+svg.mini rect { fill: var(--line); opacity: .55; }
+svg.mini rect.bg { fill: var(--paper); opacity: 1; stroke: var(--line); stroke-width: .6; }
+svg.mini rect.sb { fill: var(--side); opacity: 1; }
+svg.mini rect.on { fill: var(--accent); opacity: 1; }
+
+/* Steps are a real sequence, so they are numbered. */
+.steps { list-style: none; margin: 0; padding: 0; counter-reset: s; display: flex; flex-direction: column; }
+.steps li { counter-increment: s; display: grid; grid-template-columns: 34px 1fr; gap: 14px; padding: 0 0 18px; position: relative; }
+.steps li::before { content: counter(s); width: 34px; height: 34px; border-radius: 50%; border: 1.5px solid var(--accent); color: var(--accent); font: 600 15px/31px var(--display); text-align: center; background: var(--paper); z-index: 1; }
+.steps li:not(:last-child)::after { content: ""; position: absolute; left: 16.5px; top: 34px; bottom: 0; width: 1.5px; background: var(--line); }
+.steps b { display: block; }
+
+table { border-collapse: collapse; width: 100%; font-size: 15px; }
+.scroll { overflow-x: auto; }
+th { text-align: left; font-weight: 600; font-size: 13.5px; color: var(--muted); padding: 0 16px 8px 0; border-bottom: 1px solid var(--line); }
+td { padding: 9px 16px 9px 0; border-bottom: 1px solid var(--hover); vertical-align: top; }
+tr:last-child td { border-bottom: 0; }
+td:first-child { white-space: nowrap; }
+td.wrap { white-space: normal; }
+kbd { font: 600 12.5px var(--text); background: var(--side); border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; padding: 1px 6px; white-space: nowrap; }
+code { font: 13.5px var(--mono); background: var(--side); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+
+figure { margin: 0; display: flex; flex-direction: column; gap: 10px; }
+figcaption { font-size: 14px; color: var(--muted); max-width: 66ch; }
+.flow { color: var(--ink); overflow-x: auto; }
+.flow svg { display: block; width: 100%; min-width: 640px; height: auto; }
+.flow .node { fill: var(--side); stroke: var(--line); }
+.flow .node.main { fill: var(--accent); stroke: var(--accent); }
+.flow .node.end { fill: none; stroke: var(--done); stroke-width: 1.5; }
+.flow text { font: 13px var(--text); fill: var(--muted); }
+.flow text.n { font: 600 15px var(--display); fill: var(--ink); text-anchor: middle; }
+.flow text.n.main { fill: var(--on-accent); }
+.flow text.s { font-size: 12px; text-anchor: middle; }
+.flow text.lbl { paint-order: stroke; stroke: var(--paper); stroke-width: 5px; stroke-linejoin: round; }
+.flow .arr { fill: none; stroke: var(--ink); stroke-width: 1.5; }
+.flow .head { fill: var(--ink); }
+
+.two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px; align-items: start; }
+.tree { font: 13.5px/1.85 var(--mono); background: var(--side); border-radius: 9px; padding: 14px 16px; white-space: pre; overflow-x: auto; }
+.note { border-left: 3px solid var(--accent); padding: 2px 0 2px 14px; max-width: 66ch; }
+.small-shot { max-width: 300px; }
+.foot { color: var(--muted); font-size: 14px; }
+
+@media (max-width: 900px) {
+  .page { display: block; }
+  .rail { position: static; max-height: none; padding: 20px 16px 0; }
+  .rail .where { display: none; }
+  .rail nav { flex-direction: row; flex-wrap: wrap; }
+  main { padding: 28px 16px 70px; gap: 56px; }
+  .two { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 560px) {
+  .pair { grid-template-columns: minmax(0, 1fr); }
+  .screen { grid-template-columns: 96px minmax(0, 1fr); }
+  .pin { width: 18px; height: 18px; margin: -9px 0 0 -9px; font-size: 11px; line-height: 18px; }
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+<aside class="rail">
+  <a class="brand" href="#basla">
+    <svg class="logo" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="4" width="20" height="18" rx="4" fill="var(--accent)"/><rect x="6.5" y="1" width="2.6" height="6" rx="1.3" fill="var(--accent)"/><rect x="14.9" y="1" width="2.6" height="6" rx="1.3" fill="var(--accent)"/><path d="M7 13.5 10.5 17 17 10" fill="none" stroke="var(--on-accent)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    İş Günlüğü
+  </a>
+  <div class="where" aria-hidden="true">
+    <div class="map">{{livemap}}</div>
+    <span>Renkli yer, okuduğun bölümün pencerede bulunduğu yer.</span>
+  </div>
+  <nav aria-label="İçindekiler">
+    <a href="#basla">Dosyan ve uygulama</a>
+    <a href="#ilk">İlk beş dakika</a>
+    <a href="#harita">Pencerenin haritası</a>
+    <a href="#ekle">İş eklemek</a>
+    <a href="#hizli">Her yerden hızlı ekleme</a>
+    <a href="#satir">Bir satırda neler var</a>
+    <a href="#panel">Sağ panel</a>
+    <a href="#yolculuk">Bir işin yolculuğu</a>
+    <a href="#ekranlar">Ekranlar</a>
+    <a href="#takvim">Takvim</a>
+    <a href="#tasima">Taşımak</a>
+    <a href="#hatirlatici">Hatırlatıcılar</a>
+    <a href="#klavye">Klavyeyle çalışmak</a>
+    <a href="#dosyalar">Dosyalar ve gruplar</a>
+    <a href="#tepsi">Sistem tepsisi</a>
+    <a href="#drive">Drive ile eşitleme</a>
+    <a href="#ayarlar">Ayarlar</a>
+    <a href="#guven">Notların güvende mi</a>
+  </nav>
+</aside>
+
+<main>
+
+<section id="basla" data-parts="ContentScroll">
+  <h1>İş Günlüğü Kılavuzu</h1>
+  <p class="lead">İş Günlüğü, günlük notlarını tuttuğun düz metin dosyasını okunaklı bir iş listesine çevirir. Dosya senindir: uygulamada yaptığın her şey aynı dosyaya yazılır, Not Defteri'nde de açabilirsin.</p>
+  <figure>
+    <div class="pair">
+      <div class="txt">
+        <div class="cap" style="font-family:var(--text)">notlar.txt dosyasında</div>
+        <div class="h">----04/11/2026</div>
+        <div>👍[Done]Sabah toplantısı</div>
+        <div>🚨Faturaları kontrol et</div>
+        <div>🚨Müşteri sunumunu hazırla</div>
+        <div>&#9;👍[Done]Grafikleri güncelle</div>
+        <div>&#9;🚨Demo akışını dene</div>
+        <div>&#9;&#9;Yedek bilgisayarda da aç</div>
+      </div>
+      <div class="ui">
+        <div class="cap">Uygulamada</div>
+        <div class="day">4 Kasım 2026</div>
+        <div class="r"><span class="box done">{{tick}}</span>Sabah toplantısı</div>
+        <div class="r"><span class="box"></span><b>Faturaları kontrol et</b></div>
+        <div class="r"><span class="box part">{{dash}}</span><b>Müşteri sunumunu hazırla</b></div>
+        <div class="r s"><span class="box done">{{tick}}</span>Grafikleri güncelle</div>
+        <div class="r s"><span class="box"></span>Demo akışını dene</div>
+        <div class="r n">Yedek bilgisayarda da aç</div>
+      </div>
+    </div>
+    <figcaption>Her satır karşısındakine dönüşür. Alt işlerden biri bitip biri kalınca üstteki iş sarı olur; bu durum dosyaya ayrıca yazılmaz, alt işlerden okunur.</figcaption>
+  </figure>
+  <div class="scroll"><table>
+    <tr><th>Dosyada</th><th>Anlamı</th></tr>
+    <tr><td><code>----04/11/2026</code></td><td class="wrap">Gün başlığı. Altındaki satırlar o güne aittir.</td></tr>
+    <tr><td><code>🚨iş</code></td><td class="wrap">Bitmemiş iş.</td></tr>
+    <tr><td><code>👍[Done 12/11]iş</code></td><td class="wrap">Bitmiş iş. Tarih, işin bittiği gündür; işin durduğu günden farklı olabilir.</td></tr>
+    <tr><td><code>🚫[İptal]iş</code></td><td class="wrap">Vazgeçilen iş. Silinmez, üstü çizili kalır, sayılmaz.</td></tr>
+    <tr><td><code>iş ⏰[14:00 30dk 15dk]</code></td><td class="wrap">Hatırlatıcılı iş: saati 14:00, 30 ve 15 dakika önce haber verilir.</td></tr>
+    <tr><td><code>⇥🚨alt iş</code></td><td class="wrap">Sekmeyle başlayan işaretli satır, üstündeki işin alt işidir.</td></tr>
+    <tr><td><code>⇥⇥açıklama</code></td><td class="wrap">İki sekmeyle başlayan satır, alt işin açıklamasıdır. İşin altındaki düz satır işin açıklamasıdır.</td></tr>
+    <tr><td><code>----tarihsiz</code></td><td class="wrap">Günü belli olmayan işlerin başlığı. Dosyanın sonunda durur.</td></tr>
+  </table></div>
+</section>
+
+<section id="ilk" data-parts="DraftBox">
+  <h2>İlk beş dakika</h2>
+  <ol class="steps">
+    <li><div><b>Dosyanı oluştur.</b> İlk açılışta <em>Yeni dosya oluştur</em>'a bas, ad ver. Elinde not dosyası varsa <em>Metin belgesi ekle</em> ile kopyasını al.</div></li>
+    <li><div><b>Bugünün işini yaz.</b> Alttaki kutuya yaz, <kbd>Enter</kbd>'a bas. Bitirdiğin bir işi kaydediyorsan <kbd>Ctrl+Enter</kbd>.</div></li>
+    <li><div><b>Bitince tikle.</b> Satırın başındaki kutuya bas. Biten iş en alttaki ✓ satırına iner.</div></li>
+    <li><div><b>Yarın geri gel.</b> Bugün bitmeyen iş ertesi gün Tamamlanmamış'a düşer. Oradan <em>Bugüne al</em> ile çekersin.</div></li>
+    <li><div><b>Kapatma, küçült.</b> Çarpıya basınca uygulama sistem tepsisine iner. Simgesine tıklayınca bugünün kalan işleri açılır.</div></li>
+  </ol>
+  <p class="note">Bir ekrana ilk geldiğinde sağ üstte küçük bir davet görürsün: <em>✦ Takvimi tanı · 3 adım</em>. Basınca o ekran birkaç adımda anlatılır. Davetleri <em>Ayarlar → Yardım</em>'dan kapatır ya da <em>Tanıtımı sıfırla</em> ile en baştan alırsın.</p>
+</section>
+
+<section id="harita" data-parts="SearchBox,TodayNav,TaskGroupButton,OpenNav,FutureNav,UndatedNav,AllNav,CalendarNav,MiniCalendar,FilesPanel,ContentScroll,DraftBox">
+  <h2>Pencerenin haritası</h2>
+  <p>Soldaki şeritte İşler ve Takvim, yanındaki listede ekranlar durur. Ortada işler, altta yenisini yazdığın kutu, sağda seçtiğin işin paneli.</p>
+  <div class="shot">{{img:today}}</div>
+  <div class="scroll"><table>
+    <tr><th>Yer</th><th>Ne var</th></tr>
+    <tr><td>Şerit</td><td class="wrap">İşler ve Takvim düğmeleri, en altta Ayarlar. İşler'deki turuncu nokta önceki günlerden kalan iş var demektir.</td></tr>
+    <tr><td>Dosya düğmesi</td><td class="wrap">Açık dosyanın adı; basınca bütün dosyalar ve gruplar açılır.</td></tr>
+    <tr><td>Arama</td><td class="wrap">Bütün günlerde ve alt işlerde arar, Türkçe harf farkına takılmaz. <kbd>Ctrl+F</kbd></td></tr>
+    <tr><td>Ekranlar</td><td class="wrap">Bugün, Tamamlanmamış, Gelecek, Tarihsiz, Tümü. Yanlarındaki sayı bitmemiş iş sayısıdır.</td></tr>
+    <tr><td>Küçük takvim</td><td class="wrap">Güne tıklayınca o gün açılır; işi üstüne sürükleyince o güne taşınır.</td></tr>
+    <tr><td>Başlık</td><td class="wrap">Ekranın adı, tarih, ilerleme çubuğu ve sayılar: ilerledi, tamamlanmamış, iptal.</td></tr>
+    <tr><td>Yeni iş kutusu</td><td class="wrap">İçindeki yazı işin hangi güne ekleneceğini söyler. Sağında <em>Kısayollar (F1)</em>.</td></tr>
+  </table></div>
+  <p class="note">Pencere daralınca liste şeride sığar; şeritteki düğmeye basınca liste ortanın üstünde açılır. Eski düzeni istersen <em>Ayarlar → Görünüm → Sol panel → Klasik</em>.</p>
+</section>
+
+<section id="ekle" data-parts="DraftBox">
+  <h2>İş eklemek</h2>
+  <p>Altta, çerçeveli tek satır: <em>Bugüne iş ekle…</em>. Tıklayınca ya da listede yazmaya başlayınca açılır. İşin adını yaz, <kbd>Enter</kbd>'a bas; iş eklenir, kutu yine tek satıra iner. <kbd>Ctrl+Enter</kbd> işi yapıldı olarak ekler.</p>
+  <p>Açılan kutunun altında üç düğme var: gün, <em>＋ Açıklama</em> ve <em>＋ Alt iş</em>. Gün düğmesi işin gideceği günü gösterir; basınca <em>Bugün</em>, <em>Yarın</em>, <em>Tarihsiz</em> ve <em>Takvimden seç…</em> çıkar. <kbd>Esc</kbd> ya da dışarı basmak kutuyu küçültür, yazdıkların kalır; <em>Vazgeç</em> siler.</p>
+  <h3>Görsel yazma</h3>
+  <p>Kutu, işi listede görüneceği gibi gösterir: başlığın önünde kutucuk, açıklama soluk, alt işler kendi küçük kutularıyla. <kbd>Shift+Enter</kbd> alt satır açar; satırın başına <code>- </code> yazarsan alt iş olur, satırın başında <kbd>Backspace</kbd> geri alır. Kopyaladığın bir listeyi yapıştırırsan satırlar aynı kurala göre ayrılır.</p>
+  <p>Birden çok satırı seçmek için <kbd>Ctrl+A</kbd>'ya iki kez bas: ilki bulunduğun satırı, ikincisi hepsini seçer. Satırlar arasında fareyle sürüklemek ya da satırın kenarında <kbd>Shift+↑</kbd>/<kbd>Shift+↓</kbd> de seçer. Seçili satırları kopyalar, keser, siler ya da üstüne yazarsın.</p>
+  <p class="note">Düz metin kutusunu (Metin) istersen <em>Ayarlar → Görünüm → Yazma görünümü</em>'nden seç. Orada - ile başlayan satır alt iş, girintili satır onun açıklaması olur.</p>
+  <h3>Günü ve saati yazarak</h3>
+  <p>İlk satırın başına ya da sonuna bir gün yazarsan iş o güne gider, gün kelimeleri başlıktan çıkar: <code>yarın rapor</code>, <code>toplantı cuma</code>, <code>haftaya salı sunum</code>, <code>15 kasım teslim</code>, <code>teslim 15.11</code>. Bir saat de yazarsan (<code>yarın 14:00 toplantı</code>) işe hatırlatıcı kurulur: saati ve varsayılan iki hatırlatma, 30 ve 15 dakika önce.</p>
+  <div class="scroll"><table>
+    <tr><th>Açık ekran</th><th>Yazdığın iş</th></tr>
+    <tr><td>Bugün, Tamamlanmamış, Tümü</td><td class="wrap">Bugüne</td></tr>
+    <tr><td>Takvimden açılan gün</td><td class="wrap">O güne, geçmiş ya da ileri fark etmez</td></tr>
+    <tr><td>Gelecek</td><td class="wrap">Yarına</td></tr>
+    <tr><td>Tarihsiz</td><td class="wrap">Tarihsizlere</td></tr>
+  </table></div>
+</section>
+
+<section id="hizli" data-parts="DraftBox">
+  <h2>Her yerden hızlı ekleme</h2>
+  <p><kbd>{{hotkey}}</kbd> hangi programda olursan ol küçük bir kutu açar. Yaz, <kbd>Enter</kbd>; iş bugüne eklenir, kutu kapanır. Yazdığın gün ve saat burada da okunur; kelime gün değilse altta çıkan <em>Tarih değil</em>'e bas.</p>
+  <div class="shot bare" style="max-width:520px">{{img:hizliekle}}</div>
+  <p>Birden çok not dosyan varsa sağ üstte dosya adı durur: basınca ya da <kbd>Ctrl+D</kbd> ile işin gideceği dosyayı seçersin. Son seçtiğin hatırlanır.</p>
+</section>
+
+<section id="satir" data-parts="ContentScroll">
+  <h2>Bir satırda neler var</h2>
+  <div class="shot">{{img:satir}}</div>
+  <div class="scroll"><table>
+    <tr><th>Parça</th><th>Ne yapar</th></tr>
+    <tr><td><span class="box"></span>&ensp;Boş kutu</td><td class="wrap">Bitmemiş iş. Tıklayınca biter.</td></tr>
+    <tr><td><span class="box part">{{dash}}</span>&ensp;Sarı kutu</td><td class="wrap">Yarım iş: alt işlerin bir kısmı bitmiş, yanında 1/3 gibi sayı yazar. Tıklayınca kalan alt işler de biter.</td></tr>
+    <tr><td><span class="box done">{{tick}}</span>&ensp;Yeşil tik</td><td class="wrap">Bitmiş iş. Tıklayınca yeniden açılır.</td></tr>
+    <tr><td>1/3 ve ok</td><td class="wrap">Alt işler kapalı gelir, ana işin açıklaması görünür kalır. Basınca açılır; açtığın iş sonraki açılışta da açık kalır.</td></tr>
+    <tr><td>⏰ 14:00</td><td class="wrap">Hatırlatıcının saati. Saati geçince ya da iş bitince gri olur.</td></tr>
+    <tr><td>İşe tıklamak</td><td class="wrap">Sağda paneli açar.</td></tr>
+    <tr><td>Kalem</td><td class="wrap">İşi satırın içinde, ekleme kutusundaki gibi düzenler. <kbd>Enter</kbd> kaydeder, <kbd>Esc</kbd> vazgeçer.</td></tr>
+    <tr><td>Bugüne al</td><td class="wrap">Başka güne ait bitmemiş işi bugüne taşır.</td></tr>
+  </table></div>
+  <p>Günün bitmiş ve iptal edilmiş işleri en altta, ince bir çizginin altında <em>✓ 4 iş bitti</em> satırında toplanır; kapalı gelir, basınca açılır. Günün bütün işleri bittiyse doğrudan listelenir.</p>
+  <p>Bir işin alt işi başka bir gün yapıldıysa o gün listenin altında <em>18 Kasım'daki iş</em> gibi bir satır çıkar. Basınca işin durduğu gün açılır ve iş seçili gelir.</p>
+  <div class="two">
+    <div>
+      <h3>Soldaki altı nokta</h3>
+      <p>Satırın en solundaki noktalar taşımanın tutamağıdır. Tutup sürüklersin; tıklarsan yandaki menü açılır.</p>
+      <p>Menüde görünenler satıra göre değişir: örneğin bitmiş işte Bugüne al çıkmaz.</p>
+    </div>
+    <div class="shot bare" style="max-width:300px">{{img:menu}}</div>
+  </div>
+</section>
+
+<section id="panel" data-parts="ContentScroll">
+  <h2>Sağ panel</h2>
+  <p>Bir işe tıklayınca sağda açılır. Panel açıkken listede başka işe tıklarsan ona geçer; boş bir yere tıklamak ya da <kbd>Esc</kbd> kapatır. Sol kenarından tutup genişletirsin, çift tık eski boyuna döndürür.</p>
+  <div class="two">
+    <div class="shot bare" style="max-width:340px">{{img:panel}}</div>
+    <div class="scroll"><table>
+      <tr><th>Panelde</th><th>Ne yapar</th></tr>
+      <tr><td>Üst yazı</td><td class="wrap">İşin durduğu gün: Bugün, Yarın ya da tarih.</td></tr>
+      <tr><td>Başlık ve açıklama</td><td class="wrap">Yaz, <kbd>Enter</kbd> kaydeder. Açıklamada <kbd>Alt+Enter</kbd> alt satır açar.</td></tr>
+      <tr><td>Hatırlatıcı</td><td class="wrap"><em>Hatırlatıcı ekle</em> ya da <em>Hatırlatıcı · 14:00</em>. Basınca kendi sayfası açılır.</td></tr>
+      <tr><td>Alt işler</td><td class="wrap">Ekle, tikle, sil. Noktalardan sürükleyerek ya da <kbd>Alt+↑</kbd>/<kbd>Alt+↓</kbd> ile sırasını değiştir. Bir alt işe basınca panel o alt işe geçer, ‹ ile dönersin. Açıklaması olan alt işin yanında küçük bir not simgesi durur.</td></tr>
+      <tr><td>Bitti</td><td class="wrap">Bitmiş işte ne zaman bittiği yazar. <em>Tarihi değiştir</em> ile küçük takvimden başka gün seçersin; iş yerinde kalır.</td></tr>
+      <tr><td>Taşı</td><td class="wrap">Bugüne al, Yarına, Tarihsize al, Takvimden seç…. Panelin altında sabit durur.</td></tr>
+      <tr><td>Sil ve İşi iptal et</td><td class="wrap">Silinen iş <em>Geri al</em> ile döner. İptal edilen iş silinmez, üstü çizili kalır; <em>İptali geri al</em> ile geri gelir.</td></tr>
+    </table></div>
+  </div>
+</section>
+
+<section id="yolculuk" data-parts="TodayNav,OpenNav,FutureNav,UndatedNav">
+  <h2>Bir işin yolculuğu</h2>
+  <p>Ekranlar ayrı listeler değildir. Hepsi aynı dosyanın farklı görünümüdür, bir iş hangi ekranda olduğunu tarihinden alır.</p>
+  <figure class="flow">
+    <svg viewBox="0 0 860 400" role="img" aria-label="Bugünün işi tiklenince biter, gün biterse Tamamlanmamış'a düşer, oradan Bugüne al ile döner. Gelecek işler günü gelince Bugün'e gelir. Tarihsiz işler Bugüne al ile bugüne geçer.">
+      <defs>
+        <marker id="ok" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="head" d="M0 0 10 5 0 10z"/></marker>
+      </defs>
+
+      <rect class="node" x="20" y="30" width="170" height="64" rx="9"/>
+      <text class="n" x="105" y="58">Gelecek</text><text class="s" x="105" y="78">ileri tarihli</text>
+
+      <rect class="node" x="20" y="240" width="170" height="64" rx="9"/>
+      <text class="n" x="105" y="268">Tarihsiz</text><text class="s" x="105" y="288">günü belli değil</text>
+
+      <rect class="node main" x="345" y="135" width="170" height="64" rx="9"/>
+      <text class="n main" x="430" y="172">Bugün</text>
+
+      <rect class="node end" x="670" y="135" width="170" height="64" rx="9"/>
+      <text class="n" x="755" y="163">Bitti</text><text class="s" x="755" y="183">yapıldığı günde kalır</text>
+
+      <rect class="node" x="345" y="320" width="170" height="64" rx="9"/>
+      <text class="n" x="430" y="348">Tamamlanmamış</text><text class="s" x="430" y="368">önceki günlerden kalan</text>
+
+      <line class="arr" x1="515" y1="167" x2="668" y2="167" marker-end="url(#ok)"/>
+      <text class="lbl" x="592" y="157" text-anchor="middle">tikleyince</text>
+
+      <line class="arr" x1="405" y1="201" x2="405" y2="318" marker-end="url(#ok)"/>
+      <text class="lbl" x="397" y="262" text-anchor="end">gün biterse</text>
+      <line class="arr" x1="455" y1="318" x2="455" y2="201" marker-end="url(#ok)"/>
+      <text class="lbl" x="463" y="262">Bugüne al</text>
+
+      <path class="arr" d="M190 72 C260 86 300 120 343 150" marker-end="url(#ok)"/>
+      <text class="lbl" x="280" y="128" text-anchor="end">günü gelince</text>
+      <path class="arr" d="M345 138 C300 90 250 56 192 50" marker-end="url(#ok)"/>
+      <text class="lbl" x="285" y="58">Yarına taşı</text>
+
+      <path class="arr" d="M190 262 C260 250 300 215 343 186" marker-end="url(#ok)"/>
+      <text class="lbl" x="245" y="222" text-anchor="end">Bugüne al</text>
+      <path class="arr" d="M345 198 C305 250 255 285 192 286" marker-end="url(#ok)"/>
+      <text class="lbl" x="205" y="312">Tarihsiz yap</text>
+    </svg>
+    <figcaption>Oklardaki adlar, işi o yöne götüren düğme ya da olay. Tarihsiz bir işi tiklersen, ne zaman yaptığın kayıtta kalsın diye bitirdiğin günün altına yazılır.</figcaption>
+  </figure>
+</section>
+
+<section id="ekranlar" data-parts="TodayNav,TaskGroupButton,OpenNav,FutureNav,UndatedNav,AllNav">
+  <h2>Ekranlar</h2>
+  {{screen:TodayNav:Bugün:bugun:Sadece bugünün işleri: önce yarımlar, sonra bitmemişler, en altta ✓ satırında bitenler. Başlığın altındaki çubuk günün ne kadarının bittiğini gösterir; sarı dilim, alt işi bugün biten işlerin payıdır. Yanındaki etiketler: ilerledi, tamamlanmamış, iptal. Takvimden açtığın günler de aynı düzende görünür.}}
+  {{screen:OpenNav:Tamamlanmamış:tamamlanmamis:Önceki günlerden kalan, bitmemiş işler. Her iş yazıldığı günün başlığı altında durur. Satırdaki <em>Bugüne al</em> tek işi, sağ üstteki <em>Hepsini bugüne al</em> hepsini çeker; tek <em>Geri al</em> hepsini geri koyar.}}
+  {{screen:FutureNav:Gelecek:gelecek:İleri tarihli işler, en yakın gün en üstte. Bu ekranda yazdığın iş yarına eklenir. Başka bir ileri gün için takvimde o güne tıklayıp orada yaz.}}
+  {{screen:UndatedNav:Tarihsiz:tarihsiz:Bir gün yapılacak, günü belli olmayan işler. Tiklediğin iş bitirdiğin günün altına yazılır ve buradan çıkar.}}
+  {{screen:AllNav:Tümü:all:Bitmemiş her şey dört başlıkta: Bugün, Önceki günlerden kalan, Gelecek, Tarihsiz. Her başlık tıklayınca açılır kapanır, kapattıkların kapalı kalır.}}
+  <p class="note">Ekranlar arasında <kbd>Ctrl+↑</kbd>/<kbd>Ctrl+↓</kbd> ile, günler arasında <kbd>Ctrl+←</kbd>/<kbd>Ctrl+→</kbd> ile, iş olan günler arasında <kbd>Alt+←</kbd>/<kbd>Alt+→</kbd> ile geçersin. Başka güne geçtiysen başlıktaki <em>Bugüne dön</em> geri getirir.</p>
+</section>
+
+<section id="takvim" data-parts="CalendarNav,MiniCalendar">
+  <h2>Takvim</h2>
+  <p>Şeritteki Takvim düğmesi. Takvimi üç boyda görürsün: hafta, ay ya da yıl; seçtiğin hatırlanır. Soldaki listeden haftaya, aya ya da yıla geçersin. Bir güne basınca o gün İşler'de açılır, başlığın üstündeki <em>‹ Takvime dön</em> seni geri getirir.</p>
+  {{screen:CalendarNav:Hafta:hafta:Günler alt alta, işleri yanında. Bir işe basınca sağ panelde açılır, hafta yerinde kalır. Bir işi başka güne sürükleyerek taşırsın. <em>Özeti kopyala</em> haftada biten işleri gün gün düz metin olarak panoya alır; haftalık rapora yapıştırırsın.}}
+  {{screen:CalendarNav:Ay:calendar:Ayın tamamı, günlerin içinde ilk işler. Yeşil koyulaştıkça o gün daha çok iş bitmiş demektir: 1-2, 3-4, 5 ve üzeri. Turuncu nokta tamamlanmamış iş var demektir.}}
+  {{screen:CalendarNav:Yıl:yil:On iki ay yan yana, her gün küçük bir kare. Bir yılda nerede yoğunlaştığını bir bakışta görürsün.}}
+  <p>İşler'deki küçük takvim aynı renkleri kullanır. Ayın adına basınca on iki ay açılır, uzak bir aya hızlıca geçersin.</p>
+</section>
+
+<section id="tasima" data-parts="TodayNav,FutureNav,UndatedNav,MiniCalendar,ContentScroll">
+  <h2>Taşımak</h2>
+  <p>Bir işi soldaki noktalarından tutup sürükle. Nereye bıraktığın ne olacağını belirler. Liste ekrana sığmıyorsa imleci üst ya da alt kenara götür, liste kendiliğinden kayar.</p>
+  <div class="scroll"><table>
+    <tr><th>Bıraktığın yer</th><th>Sonuç</th></tr>
+    <tr><td>Başka bir iş</td><td class="wrap">Onun üstüne ya da altına yerleşir. Başka günün işiyse o güne geçer.</td></tr>
+    <tr><td>Sol listede Bugün</td><td class="wrap">Bugüne</td></tr>
+    <tr><td>Sol listede Gelecek</td><td class="wrap">Yarına</td></tr>
+    <tr><td>Sol listede Tarihsiz</td><td class="wrap">Tarihsizlere</td></tr>
+    <tr><td>Küçük takvimde bir gün</td><td class="wrap">O güne, geçmiş ya da ileri</td></tr>
+    <tr><td>Haftada başka bir gün</td><td class="wrap">O güne</td></tr>
+    <tr><td>Listenin altındaki boşluk</td><td class="wrap">Açık günün sonuna</td></tr>
+  </table></div>
+  <h3>Klavyeyle taşımak</h3>
+  <p>Seçili işte <kbd>M</kbd> taşıma menüsünü açar: <em>Bugüne</em>, <em>Yarına</em>, <em>Tarihsize</em>, <em>Gün seç…</em>. Gün seçerken oklar küçük takvimde gezer, <kbd>Enter</kbd> taşır, <kbd>Esc</kbd> vazgeçer. <kbd>Ctrl+Shift+←</kbd>/<kbd>Ctrl+Shift+→</kbd> işi bir gün öne ya da sonraya alır.</p>
+  <h3>Birden çok işi birlikte taşımak</h3>
+  <p><kbd>Ctrl</kbd>+tık tek tek, <kbd>Shift</kbd>+tık aralık seçer, sağ üstteki <em>Hepsini seç</em> listedeki her şeyi. Klavyede <kbd>Shift+↑</kbd>/<kbd>Shift+↓</kbd> aralık, <kbd>Shift+Enter</kbd> tek iş seçer. <kbd>Esc</kbd> seçimi kaldırır.</p>
+  <div class="shot">{{img:selection}}</div>
+  <p>Seçili işlerden birini sürükleyince hepsi gider, sıraları korunur. Alttaki çubuktan da bugüne, yarına ya da tarihsize taşırsın.</p>
+  <h3>Geçmişe ya da başka bir güne</h3>
+  <p>Bitmiş ya da bitmemiş fark etmez. İşi küçük takvimde bir günün üstüne sürükle, ya da noktalardan <em>Başka güne taşı</em>'yı seçip takvimde güne tıkla. Tik durumu değişmez; o gün dosyada yoksa başlığı tarih sırasına uygun yere eklenir.</p>
+</section>
+
+<section id="hatirlatici" data-parts="ContentScroll">
+  <h2>Hatırlatıcılar</h2>
+  <p>Toplantı, arama gibi saatli işler unutulmasın diye. Bir işin saati ve en çok iki hatırlatması olur; vakti gelince sağ altta haber gelir.</p>
+  <div class="two">
+    <div class="shot bare" style="max-width:340px">{{img:hatirlatici}}</div>
+    <ol class="steps">
+      <li><div><b>Kur.</b> Sağ panelde <em>Hatırlatıcı ekle</em>'ye bas. İşe bir sonraki tam saat ve varsayılan iki hatırlatma konur, sayfası açılır.</div></li>
+      <li><div><b>Saati ayarla.</b> Saati yaz ya da <kbd>↑</kbd>/<kbd>↓</kbd> ile 5'er dakika değiştir.</div></li>
+      <li><div><b>Ne kadar önce.</b> Hazır sürelerden en çok iki tane seç: Tam saatinde, 5 dk … 1 gün. <em>Özel…</em> ile kendi süreni yazarsın. Her hatırlatmanın altında çalacağı saat soluk yazar.</div></li>
+      <li><div><b>Haber.</b> Vakti gelince <em>Müşteriyle toplantı · 14:00 — 30 dk sonra</em> gibi bir bildirim çıkar; basınca iş açılır.</div></li>
+    </ol>
+  </div>
+  <div class="scroll"><table>
+    <tr><th>Durum</th><th>Ne olur</th></tr>
+    <tr><td>İş bitti ya da iptal edildi</td><td class="wrap">Kalan hatırlatma çalmaz. Biten işe hatırlatıcı eklenmez.</td></tr>
+    <tr><td>Bilgisayar kapalıydı</td><td class="wrap">Saat geçmediyse açılınca bir kez haber verir; ikisi birden kaçtıysa yalnız sonuncusu.</td></tr>
+    <tr><td>Tarihsiz iş</td><td class="wrap">Saat yazılabilir ama hatırlatma çalmaz.</td></tr>
+    <tr><td>Aynı dakikada iki iş</td><td class="wrap">Tek bildirimde birlikte gelir.</td></tr>
+  </table></div>
+  <h3>Gün sonu hatırlatması</h3>
+  <p>Seçtiğin saatte bugün açık iş kaldıysa günde bir kez haber verir; bildirime basınca bugünün işleri açılır. Saati ve açık kapalı olduğunu <em>Ayarlar → Davranış</em>'ta seçersin. Yeni hatırlatıcıların varsayılan iki süresi de orada.</p>
+</section>
+
+<section id="klavye" data-parts="ShortcutsButton">
+  <h2>Klavyeyle çalışmak</h2>
+  <p>Fareye dokunmadan: listede bir işe gel, sonra tuşlarla yönet. Seçili işin zemini hafif turkuaz, solunda çizgi olur.</p>
+  <div class="two">
+    <div class="scroll"><table>
+      <tr><th>Listede</th><th></th></tr>
+      <tr><td><kbd>↑</kbd> <kbd>↓</kbd></td><td class="wrap">Önceki, sonraki iş</td></tr>
+      <tr><td><kbd>Tab</kbd> <kbd>Shift+Tab</kbd></td><td class="wrap">Yalnız bitmemiş işler arasında</td></tr>
+      <tr><td><kbd>→</kbd> <kbd>←</kbd></td><td class="wrap">Alt işlere in, ana işe çık</td></tr>
+      <tr><td><kbd>Boşluk</kbd></td><td class="wrap">Tikle, tiki kaldır</td></tr>
+      <tr><td><kbd>F2</kbd></td><td class="wrap">Yerinde düzenle</td></tr>
+      <tr><td><kbd>Enter</kbd></td><td class="wrap">Sağ panelde aç</td></tr>
+      <tr><td><kbd>Del</kbd></td><td class="wrap">Sil, önce sorar</td></tr>
+      <tr><td><kbd>Alt+↑</kbd> <kbd>Alt+↓</kbd></td><td class="wrap">Sırada yukarı, aşağı</td></tr>
+      <tr><td><kbd>M</kbd></td><td class="wrap">Taşıma menüsü</td></tr>
+    </table></div>
+    <div class="scroll"><table>
+      <tr><th>Genel</th><th></th></tr>
+      <tr><td><kbd>Ctrl+1</kbd> … <kbd>Ctrl+6</kbd></td><td class="wrap">Ekranlar ve Takvim</td></tr>
+      <tr><td><kbd>Ctrl+N</kbd></td><td class="wrap">Yeni iş kutusu</td></tr>
+      <tr><td><kbd>{{hotkey}}</kbd></td><td class="wrap">Her yerden hızlı ekleme</td></tr>
+      <tr><td><kbd>Ctrl+F</kbd></td><td class="wrap">Ara</td></tr>
+      <tr><td><kbd>Ctrl+Z</kbd></td><td class="wrap">Geri al</td></tr>
+      <tr><td><kbd>Esc</kbd></td><td class="wrap">Kutuyu, paneli, seçimi ya da aramayı kapat</td></tr>
+      <tr><td><kbd>F5</kbd></td><td class="wrap">Dosyayı yeniden yükle</td></tr>
+      <tr><td><kbd>F1</kbd></td><td class="wrap">Kısayollar penceresi</td></tr>
+    </table></div>
+  </div>
+  <p><kbd>F1</kbd> bütün kısayolları konularına göre sekmelerde gösterir; üstteki aramaya <em>taşı</em> ya da <em>gün</em> yazınca bütün sekmelerden bulur.</p>
+</section>
+
+<section id="dosyalar" data-parts="FilesPanel">
+  <h2>Dosyalar ve gruplar</h2>
+  <p>Notların Belgeler'deki İş Günlüğü klasöründe durur. Her grup diskte bir klasördür; düzenini uygulamadan yönetirsin.</p>
+  <div class="two">
+    <div><h3>Uygulamada</h3><div class="shot bare" style="max-width:320px">{{img:dosyalar}}</div></div>
+    <div><h3>Belgeler klasöründe</h3>
+      <div class="txt"><div>Belgeler</div><div>└─ İş Günlüğü</div><div>&nbsp;&nbsp;&nbsp;├─ İş</div><div>&nbsp;&nbsp;&nbsp;│&nbsp;&nbsp;├─ notlar.txt</div><div>&nbsp;&nbsp;&nbsp;│&nbsp;&nbsp;└─ raporlar.txt</div><div>&nbsp;&nbsp;&nbsp;└─ ev.txt</div></div>
+    </div>
+  </div>
+  <div class="scroll"><table>
+    <tr><th>Yapmak istediğin</th><th>Nasıl</th></tr>
+    <tr><td>Dosyaya geçmek</td><td class="wrap">Üstteki dosya düğmesine bas, listeden seç. Ortadaki ekran aynı kalır; sayı o dosyadaki bitmemiş iş sayısıdır.</td></tr>
+    <tr><td>Yeni dosya ya da grup</td><td class="wrap">Listenin altından. Konum sorulmaz, <code>.txt</code> kendiliğinden eklenir.</td></tr>
+    <tr><td>Sırayı değiştirmek</td><td class="wrap">Noktalardan tutup sürükle; başka grubun altına bırakırsan dosya o gruba geçer.</td></tr>
+    <tr><td>Adını değiştirmek</td><td class="wrap">Kalem ya da <kbd>F2</kbd>: ad yerinde değişir.</td></tr>
+    <tr><td>Diğerleri</td><td class="wrap">Üç nokta ya da sağ tık: gruba taşı, gruptan çıkar, Not Defteri'nde aç, sil. Silinen dosyanın son hali yedeklerde kalır.</td></tr>
+    <tr><td>Dışarıdan belge eklemek</td><td class="wrap">Ayarlar → Metin belgesi ekle. Kopyası alınır, orijinaline dokunulmaz.</td></tr>
+  </table></div>
+  <p class="note">Listede sadece ad göründüğü için iki dosyaya aynı adı veremezsin, grupları farklı olsa da.</p>
+</section>
+
+<section id="tepsi" data-parts="SettingsButton">
+  <h2>Sistem tepsisi</h2>
+  <p>Çarpıya basınca uygulama kapanmaz, saatin yanındaki tepsiye iner. Açık iş varken simgedeki tikin yerinde bugün kalan iş sayısı yazar.</p>
+  <div class="two">
+    <div class="shot bare" style="max-width:396px">{{img:tray}}</div>
+    <div>
+      <div class="scroll"><table>
+        <tr><th>Simgeye</th><th>Sonuç</th></tr>
+        <tr><td>Tek tık</td><td class="wrap">Bugünün yarım ve yapılmamış işleri</td></tr>
+        <tr><td>Çift tık</td><td class="wrap">Uygulama açılır</td></tr>
+        <tr><td>Sağ tık</td><td class="wrap">Menü: Bugünün işleri, Uygulamayı aç, Çıkış</td></tr>
+      </table></div>
+      <p>Panelde işleri ve alt işleri tikleyebilirsin. Her işin ilk üç açık alt işi görünür, gerisi <em>+ 4 alt iş daha</em> ile uygulamada açılır. Açıklaması olan işin yanında küçük bir not simgesi durur.</p>
+      <p>Tamamen kapatmak için simgeye sağ tıklayıp <em>Çıkış</em>'ı seç.</p>
+    </div>
+  </div>
+</section>
+
+<section id="drive" data-parts="SettingsButton">
+  <h2>Drive ile eşitleme</h2>
+  <p>Notların bilgisayarında ve telefonunda aynı kalsın diye kendi Google Drive'ın üzerinden eşitlenir. Uygulama Drive'ında yalnız kendi oluşturduğu dosyaları görür; başka dosyalarına erişemez.</p>
+  <ol class="steps">
+    <li><div><b>Bağlan.</b> <em>Ayarlar → Eşitleme → Google Drive'ı bağla</em>. Tarayıcıda Google hesabını seç.</div></li>
+    <li><div><b>Telefonda da.</b> Telefon uygulamasında aynı hesapla bağlan; aynı dosyalar gelir.</div></li>
+    <li><div><b>Gerisi kendiliğinden.</b> Her değişiklikten birkaç saniye sonra eşitlenir. <em>Şimdi eşitle</em> hemen yapar.</div></li>
+  </ol>
+  <div class="scroll"><table>
+    <tr><th>Durum</th><th>Uygulamanın yaptığı</th></tr>
+    <tr><td>İki yerde aynı anda değişti</td><td class="wrap">Üstte <em>Farklılık bulundu</em> yazar. Açınca iki hali yan yana görürsün; yeni olan vurgulu. Birini seçersin, öbürü yedeklerde kalır.</td></tr>
+    <tr><td>Birçok dosya birden silindi</td><td class="wrap">Silmeyi durdurur ve sorar: <em>Silinsin</em> ya da <em>Geri getir</em>. Yanlışlıkla klasör boşaltmak notları götürmez.</td></tr>
+    <tr><td>İnternet yok</td><td class="wrap">Notlar bilgisayarda çalışmaya devam eder; bağlantı gelince eşitlenir.</td></tr>
+    <tr><td>Bağlantıyı kesmek</td><td class="wrap"><em>Ayarlar → Eşitleme</em>'den. Google tarafında da kaldırmak için myaccount.google.com/permissions.</td></tr>
+  </table></div>
+  <p>Gizlilik politikası: <a href="https://antagonist1.github.io/gizlilik.html">antagonist1.github.io/gizlilik.html</a></p>
+</section>
+
+<section id="ayarlar" data-parts="SettingsButton">
+  <h2>Ayarlar</h2>
+  <div class="shot">{{img:ayarlar}}</div>
+  <p>Solda dört bölüm, sağda her ayar bir satır.</p>
+  <div class="scroll"><table>
+    <tr><th>Bölüm</th><th>Neler var</th></tr>
+    <tr><td>Görünüm</td><td class="wrap">Tema: Sistem, Açık ya da Koyu. Sol panel: Yeni ya da Klasik. Yazma görünümü: Görsel ya da Metin.</td></tr>
+    <tr><td>Davranış</td><td class="wrap">Windows açılınca başlat, çarpıya basınca tepsiye küçült, gün sonu hatırlatması ve saati, hatırlatıcılar ve yeni hatırlatıcının iki süresi.</td></tr>
+    <tr><td>Eşitleme</td><td class="wrap">Drive bağlantısı ve durumu.</td></tr>
+    <tr><td>Yardım</td><td class="wrap">Kullanım kılavuzu, Adım adım tanıtım, Tanıtım davetleri, Tanıtımı sıfırla, Kısayollar, Sürüm notları, Hata günlüğü. Altında sürüm numarası.</td></tr>
+  </table></div>
+</section>
+
+<section id="guven" data-parts="FilesPanel">
+  <h2>Notların güvende mi</h2>
+  <div class="scroll"><table>
+    <tr><th>Durum</th><th>Uygulamanın yaptığı</th></tr>
+    <tr><td>Yanlış işlem</td><td class="wrap"><em>Geri al</em> son 50 değişikliğe kadar döner. Listede <kbd>Del</kbd> silmeden önce sorar.</td></tr>
+    <tr><td>Günlük yedek</td><td class="wrap">Her dosyanın gün içindeki ilk değişiklikten önceki hali <code>%AppData%\IsGunlugu\yedekler</code> klasörüne kopyalanır, son 30 günü tutulur.</td></tr>
+    <tr><td>Dosya dışarıdan değişti</td><td class="wrap">Üstüne yazmaz, güncel halini yükler ve işlemi tekrar denemeni söyler.</td></tr>
+    <tr><td>Kayıt yarıda kaldı</td><td class="wrap">Önce geçici dosyaya yazar, sonra yerine koyar; eski dosya yarım kalmaz.</td></tr>
+    <tr><td>Farklı kodlamalı dosya</td><td class="wrap">UTF-8 ve UTF-16 dışındaki dosyayı bozmamak için açmaz, Not Defteri'nde UTF-8 olarak kaydetmeni söyler.</td></tr>
+    <tr><td>Beklenmeyen hata</td><td class="wrap"><em>Ayarlar → Yardım → Hata günlüğü</em>'ne yazılır; bir sorun bildirirken işe yarar. Hiçbir yere gönderilmez.</td></tr>
+  </table></div>
+  <p class="foot">Bu kılavuzdaki görüntüler örnek notlarla çekildi. Sürüm {{version}}.</p>
+</section>
+
+</main>
+
+</div>
+<script>
+(function () {
+  var map = document.querySelector('.where svg');
+  if (!map || !('IntersectionObserver' in window)) return;
+  var links = {};
+  document.querySelectorAll('.rail nav a').forEach(function (a) { links[a.getAttribute('href').slice(1)] = a; });
+  function show(section) {
+    var parts = (section.getAttribute('data-parts') || '').split(',');
+    map.querySelectorAll('[data-p]').forEach(function (r) {
+      r.classList.toggle('on', parts.indexOf(r.getAttribute('data-p')) >= 0);
+    });
+    Object.keys(links).forEach(function (id) { links[id].removeAttribute('aria-current'); });
+    var top = section.closest('section');
+    if (top && links[top.id]) links[top.id].setAttribute('aria-current', 'true');
+  }
+  var watcher = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) { if (e.isIntersecting) show(e.target); });
+  }, { rootMargin: '-35% 0px -60% 0px' });
+  document.querySelectorAll('section[data-parts], .screen[data-parts]').forEach(function (s) { watcher.observe(s); });
+  show(document.querySelector('section[data-parts]'));
+})();
+</script>
+</body>
+</html>
