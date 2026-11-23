@@ -1,8 +1,13 @@
 # İş Günlüğü
 
+**Türkçe** · [English](README.en.md)
+
 Günlük işleri düz bir `.txt` dosyasında tutan Windows masaüstü uygulaması. Notlar senin dosyanda durur; uygulama onları gün gün, iş iş gösterir. İstersen Google Drive'a eşitlenir, başka bilgisayarlarda da aynı notlar görünür.
 
-![İş Günlüğü, Bugün ekranı](docs/kaynak/goruntu/today-l.png)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/readme/bugun-koyu.png">
+  <img alt="İş Günlüğü, Bugün ekranı" src="docs/readme/bugun-acik.png">
+</picture>
 
 ## Neler yapar
 
@@ -14,11 +19,13 @@ Günlük işleri düz bir `.txt` dosyasında tutan Windows masaüstü uygulamas�
 - **Birden çok dosya:** Her proje için ayrı `.txt` dosyası tutulur, dosyalar gruplara ayrılır.
 - **Açık ve koyu tema:** Pencere küçülse de büyüse de düzen bozulmaz.
 
-Ayrıntılı anlatım [kullanım kılavuzunda](docs/kilavuz.html).
+Ayrıntılı anlatım [kullanım kılavuzunda](https://antagonist1.github.io/is-gunlugu/kilavuz.html).
 
 ## İndir
 
 Son sürüm [Releases](https://github.com/Antagonist1/is-gunlugu/releases) sayfasında. `IsGunlugu.exe` kurulum istemez: indirip çalıştırman yeterli. Windows 10 ve 11'de .NET Framework 4.8 zaten yüklüdür.
+
+Exe imzasız olduğu için Windows ilk açılışta "Windows kişisel bilgisayarınızı korudu" diyebilir. **Ek bilgi → Yine de çalıştır** ile açılır.
 
 ## Dosya biçimi
 
